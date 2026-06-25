@@ -1,0 +1,15 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Client {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  phone       String
+  createdAt   DateTime @default(now()) // Handles creation time automatically
+}
