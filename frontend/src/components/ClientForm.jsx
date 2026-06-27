@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { clientApi } from '../Api/clientApi';
 
 export default function ClientForm({ onAddClient, onUpdateClient, editingClient, onCancelEdit }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // If editingClient changes, fill the form or clear it
   useEffect(() => {
     if (editingClient) {
       setName(editingClient.name);
@@ -18,41 +19,133 @@ export default function ClientForm({ onAddClient, onUpdateClient, editingClient,
     }
   }, [editingClient]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !phone) return alert('Please enter the client name and phone number!');
-    
-    if (editingClient) {
-      // If we are in edit mode
-      onUpdateClient(editingClient.id, { name, phone, description });
-    } else {
-      // If we are in add mode
-      onAddClient({ name, phone, description });
-    }
+    if (!name || !phone) return;
 
-    // Clear the form after submission
-    setName('');
-    setPhone('');
-    setDescription('');
+    setSubmitting(true);
+    try {
+      if (editingClient) {
+        await onUpdateClient(editingClient.id, { name, phone, description });
+      } else {
+        await onAddClient({ name, phone, description });
+      }
+      setName('');
+      setPhone('');
+      setDescription('');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', padding: '15px', border: editingClient ? '2px solid #007bff' : '1px solid #ccc' }}>
-      <h3>{editingClient ? 'Update Client' : 'Add New Client'}</h3>
-      <input type="text" placeholder="Client name" value={name} onChange={(e) => setName(e.target.value)} />
-      <input type="text" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} />
-      <textarea placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
-      
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button type="submit" style={{ padding: '8px', flex: 1, cursor: 'pointer', backgroundColor: editingClient ? '#007bff' : '#28a745', color: 'white', border: 'none' }}>
-          {editingClient ? 'Update Client' : 'Add New Client'}
-        </button>
+    <form onSubmit={handleSubmit} style={styles.form}>
+      <div style={styles.formHeader}>
+        <h3 style={styles.formTitle}>{editingClient ? 'Modifier le Client' : 'Nouveau Client'}</h3>
         {editingClient && (
-          <button type="button" onClick={onCancelEdit} style={{ padding: '8px', cursor: 'pointer' }}>
-            Cancel
-          </button>
+          <button type="button" onClick={onCancelEdit} style={styles.cancelBtn}>Annuler</button>
         )}
       </div>
+      <div style={styles.fields}>
+        <div style={styles.field}>
+          <label style={styles.label}>Nom</label>
+          <input
+            type="text"
+            placeholder="Nom du client"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={styles.input}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Téléphone</label>
+          <input
+            type="text"
+            placeholder="Numéro de téléphone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            style={styles.input}
+          />
+        </div>
+        <div style={styles.field}>
+          <label style={styles.label}>Description</label>
+          <textarea
+            placeholder="Description (optionnelle)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            style={{ ...styles.input, resize: 'vertical', minHeight: '80px' }}
+          />
+        </div>
+      </div>
+      <button type="submit" disabled={submitting} style={styles.submitBtn}>
+        {submitting ? 'En cours...' : editingClient ? 'Mettre à jour' : 'Ajouter le client'}
+      </button>
     </form>
   );
 }
+
+const styles = {
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px',
+  },
+  formHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  formTitle: {
+    fontSize: '16px',
+    fontWeight: 600,
+    color: 'var(--text)',
+  },
+  cancelBtn: {
+    padding: '8px 16px',
+    borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--border)',
+    background: 'var(--card-bg)',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    fontSize: '13px',
+    fontWeight: 500,
+  },
+  fields: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  label: {
+    fontSize: '13px',
+    fontWeight: 500,
+    color: 'var(--text)',
+  },
+  input: {
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--border)',
+    fontSize: '14px',
+    color: 'var(--text)',
+    background: 'var(--bg)',
+    outline: 'none',
+    transition: 'border-color 0.15s ease',
+    fontFamily: 'var(--sans)',
+  },
+  submitBtn: {
+    padding: '12px 24px',
+    borderRadius: 'var(--radius-sm)',
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#fff',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'background 0.15s ease',
+    alignSelf: 'flex-start',
+  },
+};

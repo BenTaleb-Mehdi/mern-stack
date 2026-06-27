@@ -1,38 +1,34 @@
 import { useState } from 'react';
-import ClientForm from './components/ClientForm';
-import ClientList from './components/ClientListe';
-import { useClients } from './hooks/useClients';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ClientProvider } from './context/ClientContext';
+import MainLayout from './layouts/MainLayout';
+import DashboardPage from './pages/DashboardPage';
+import FormPage from './pages/FormPage';
+import TablePage from './pages/TablePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 export default function App() {
-  const { clients, loading, error, addClient, updateClient, deleteClient } = useClients();
-  const [editingClient, setEditingClient] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('adminToken'));
+  const [showRegister, setShowRegister] = useState(false);
 
-  const handleUpdate = async (id, updatedData) => {
-    await updateClient(id, updatedData);
-    setEditingClient(null); 
-  };
+  if (!token) {
+    return showRegister
+      ? <RegisterPage onBackToLogin={() => setShowRegister(false)} />
+      : <LoginPage setToken={setToken} onRegister={() => setShowRegister(true)} />;
+  }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h1>Client Management System (SOLID Architecture)</h1>
-      
-      <ClientForm 
-        onAddClient={addClient} 
-        onUpdateClient={handleUpdate}
-        editingClient={editingClient}
-        onCancelEdit={() => setEditingClient(null)}
-      />
-
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      
-      {!loading && !error && (
-        <ClientList 
-          clients={clients} 
-          onDelete={deleteClient} 
-          onEdit={(client) => setEditingClient(client)} 
-        />
-      )}
-    </div>
+    <BrowserRouter>
+      <ClientProvider>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/form" element={<FormPage />} />
+            <Route path="/table" element={<TablePage />} />
+          </Route>
+        </Routes>
+      </ClientProvider>
+    </BrowserRouter>
   );
 }
