@@ -12,7 +12,7 @@ export default function LoginPage({ setToken, onRegister }) {
       localStorage.setItem('adminToken', res.data.token);
       setToken(res.data.token);
     } catch (err) {
-      alert(err.response?.data?.error || 'Something went wrong during login.');
+      alert(err.response?.data?.error || 'Login failed');
     }
   };
 
@@ -22,7 +22,7 @@ export default function LoginPage({ setToken, onRegister }) {
         <h2 style={styles.title}>Admin Login</h2>
         <form onSubmit={handleLogin}>
           <input
-            type="email" placeholder="Email Address" value={email}
+            type="email" placeholder="Email" value={email}
             onChange={e => setEmail(e.target.value)} style={styles.input}
           />
           <input

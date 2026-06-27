@@ -2,15 +2,16 @@ import { useState } from 'react';
 import axios from 'axios';
 
 export default function RegisterPage({ onBackToLogin }) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (password !== confirm) return alert('Passwords do not match!');
+    if (!name || !email || !password) return alert('Please fill out all fields.');
+
     try {
-      await axios.post('http://localhost:5000/api/auth/register', { email, password });
+      await axios.post('http://localhost:5000/api/auth/register', { name, email, password });
       alert('Account created successfully! You can now login.');
       onBackToLogin();
     } catch (err) {
@@ -24,16 +25,16 @@ export default function RegisterPage({ onBackToLogin }) {
         <h2 style={styles.title}>Create Admin Account</h2>
         <form onSubmit={handleRegister}>
           <input
-            type="email" placeholder="Email Address" value={email}
+            type="text" placeholder="Full Name" value={name}
+            onChange={e => setName(e.target.value)} style={styles.input}
+          />
+          <input
+            type="email" placeholder="Email" value={email}
             onChange={e => setEmail(e.target.value)} style={styles.input}
           />
           <input
             type="password" placeholder="Password" value={password}
             onChange={e => setPassword(e.target.value)} style={styles.input}
-          />
-          <input
-            type="password" placeholder="Confirm Password" value={confirm}
-            onChange={e => setConfirm(e.target.value)} style={styles.input}
           />
           <button type="submit" style={styles.btn}>Register</button>
         </form>

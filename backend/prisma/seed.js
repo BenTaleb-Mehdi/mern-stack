@@ -2,40 +2,58 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
+import { randomUUID } from 'node:crypto';
 
 const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const adminEmail = 'admin@smartrecruit.com'; // 🎯 Change to your admin email
-  const plainPassword = 'SuperSecretAdminPassword123'; // 🎯 Change to your admin password
+  const adminEmail = process.argv[2] || 'admin@smartrecruit.com';
+  const plainPassword = process.argv[3] || 'SuperSecretAdminPassword123';
 
   console.log('🌱 Starting database seeding...');
 
-  // Check if an admin already exists to prevent duplicates
-  const existingAdmin = await prisma.admin.findUnique({
+  const existingUser = await prisma.user.findUnique({
     where: { email: adminEmail },
   });
 
-  if (existingAdmin) {
-    console.log(`⚠️ Admin with email "${adminEmail}" already exists. Skipping.`);
+  if (existingUser) {
+    console.log(`⚠️ User with email "${adminEmail}" already exists. Skipping.`);
     return;
   }
 
-  // Hash the password securely
+  const userId = randomUUID();
+  const accountId = randomUUID();
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
+  const now = new Date();
 
-  // Insert the admin into MySQL
-  const newAdmin = await prisma.admin.create({
+  await prisma.user.create({
     data: {
+      id: userId,
+      name: adminEmail.split('@')[0],
       email: adminEmail,
+      emailVerified: true,
+      image: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+
+  await prisma.account.create({
+    data: {
+      id: accountId,
+      accountId: userId,
+      providerId: 'credential',
+      userId,
       password: hashedPassword,
+      createdAt: now,
+      updatedAt: now,
     },
   });
 
   console.log(`✅ Admin seeded successfully!`);
-  console.log(`📧 Email: ${newAdmin.email}`);
-  console.log(`🔑 Password: ${plainPassword} (Stored securely as hashed text)`);
+  console.log(`📧 Email: ${adminEmail}`);
+  console.log(`🔑 Password: ${plainPassword}`);
 }
 
 main()
